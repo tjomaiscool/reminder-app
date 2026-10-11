@@ -1,0 +1,18 @@
+{
+  "name": "cadence-reminder-app",
+  "version": "1.0.0",
+  "private": true,
+  "description": "A personal periodic task reminder app with a TypeScript server and file-backed database.",
+  "type": "module",
+  "scripts": {
+    "build": "npm run build:server && npm run build:client",
+    "build:server": "tsc -p tsconfig.server.json",
+    "build:client": "tsc -p tsconfig.client.json",
+    "start": "node dist/server/server.js",
+    "dev": "npm run build && npm start"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "typescript": "^5.9.0"
+  }
+}
