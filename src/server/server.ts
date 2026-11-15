@@ -1,3 +1,4 @@
+import "dotenv/config";
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
 import { readFile } from "node:fs/promises";
 import { extname, resolve, dirname, join, relative, sep } from "node:path";
@@ -71,14 +72,14 @@ async function handleApiRequest(
   }
 
   if (request.method === "GET" && requestUrl.pathname === "/api/today") {
-    sendJson(response, 200, getTodayResponse(toDatabaseFile()));
+    sendJson(response, 200, getTodayResponse(await database.getSnapshot()));
     return;
   }
 
   if (request.method === "GET" && requestUrl.pathname === "/api/reports") {
     const requestedWeekStart = requestUrl.searchParams.get("weekStart") ?? undefined;
     try {
-      sendJson(response, 200, getWeeklyReport(toDatabaseFile(), requestedWeekStart));
+      sendJson(response, 200, getWeeklyReport(await database.getSnapshot(), requestedWeekStart));
     } catch (error) {
       throw new HttpError(400, error instanceof Error ? error.message : "Invalid report week.");
     }
@@ -87,7 +88,7 @@ async function handleApiRequest(
 
   if (request.method === "GET" && requestUrl.pathname === "/api/tasks") {
     const today = getTodayKey();
-    sendJson(response, 200, { today, tasks: getAdminTaskViews(toDatabaseFile(), today) });
+    sendJson(response, 200, { today, tasks: getAdminTaskViews(await database.getSnapshot(), today) });
     return;
   }
 
@@ -105,7 +106,7 @@ async function handleApiRequest(
   }
 
   const taskId = decodeURIComponent(pathParts[2]);
-  const task = database.findTask(taskId);
+  const task = await database.findTask(taskId);
   if (!task) {
     sendJson(response, 404, { error: "Task not found." });
     return;
@@ -114,17 +115,15 @@ async function handleApiRequest(
   if (pathParts[3] === "completions" && pathParts[4] === "today") {
     const today = getTodayKey();
     if (request.method === "POST") {
-      const alreadyCompleted = database.completions.some(
-        (completion) => completion.taskId === taskId && completion.dateKey === today,
-      );
+      const alreadyCompleted = await database.hasCompletion(taskId, today);
       if (!alreadyCompleted) await database.addCompletion(taskId, today);
-      sendJson(response, 200, getTodayResponse(toDatabaseFile(), today));
+      sendJson(response, 200, getTodayResponse(await database.getSnapshot(), today));
       return;
     }
 
     if (request.method === "DELETE") {
       await database.removeLatestCompletion(taskId, today);
-      sendJson(response, 200, getTodayResponse(toDatabaseFile(), today));
+      sendJson(response, 200, getTodayResponse(await database.getSnapshot(), today));
       return;
     }
   }
@@ -133,9 +132,7 @@ async function handleApiRequest(
     const body = await readJsonBody(request);
     const dateKey = getCompletionDate(body);
     await assertCompletableDate(dateKey);
-    const alreadyCompleted = database.completions.some(
-      (completion) => completion.taskId === taskId && completion.dateKey === dateKey,
-    );
+    const alreadyCompleted = await database.hasCompletion(taskId, dateKey);
     const completion = alreadyCompleted ? null : await database.addCompletion(taskId, dateKey);
     sendJson(response, 200, { completion });
     return;
@@ -188,14 +185,6 @@ async function serveStatic(pathname: string, response: ServerResponse, headOnly:
     }
     throw error;
   }
-}
-
-function toDatabaseFile() {
-  return {
-    version: 1 as const,
-    tasks: database.tasks,
-    completions: database.completions,
-  };
 }
 
 function safeResolve(baseDirectory: string, requestedPath: string): string {

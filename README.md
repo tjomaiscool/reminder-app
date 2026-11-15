@@ -4,12 +4,12 @@ Cadence is a personal periodic-task reminder app written entirely in TypeScript.
 
 - a Node.js HTTP server;
 - a browser client compiled from TypeScript;
-- a JSON file database in `data/db.json`;
+- Neon PostgreSQL persistence, with a JSON-file fallback for local development;
 - a Today view with Must Do Today, Optional Today, and Other Active Items;
 - a Reports view for the current week and any past week;
 - an Admin view for creating and managing recurring tasks.
 
-There are no accounts or passwords. The app is intended for one person on one machine.
+There are no accounts or passwords. Do not expose the API publicly until an authentication model is implemented.
 
 ## Run it
 
@@ -21,9 +21,40 @@ npm run build
 npm start
 ```
 
-Then open `http://localhost:4173`.
+Then open `http://localhost:4173`. Without `DATABASE_URL`, local development continues to use `data/db.json`, which is ignored by Git.
 
-The database is created automatically the first time the server starts. It is intentionally ignored by Git so personal task data stays local.
+## Use Neon PostgreSQL
+
+Create a Neon project and add its connection strings to a root-level `.env` file. Use the pooled connection string for app traffic and the direct (unpooled) string for migrations and imports. `.env` is ignored by Git; keep both values private and never put them in browser configuration.
+
+In `.env`, use your actual URLs without sharing them in chat:
+
+```dotenv
+DATABASE_URL="<Neon pooled connection string>"
+MIGRATION_DATABASE_URL="<Neon direct connection string>"
+```
+
+Then, from the project directory, run:
+
+```powershell
+npm run db:migrate
+```
+
+`npm run db:migrate` applies the checked-in schema migration. To import the existing local database, first make a separate backup of `data/db.json`, then run:
+
+```powershell
+npm run db:import
+```
+
+The importer validates task and completion records, preserves their IDs, schedules, date keys, and timestamps, and writes them in a transaction. It refuses to import into a non-empty Neon database; it does not modify or delete the local JSON file. A different JSON file can be supplied as an argument to the compiled importer:
+
+```powershell
+node dist/server/import-json.js "C:\path\to\db.json"
+```
+
+Set `DATABASE_URL` when starting the app to use Neon. The server verifies that the schema is already applied and fails on startup if it is missing. In production, `DATABASE_URL` is required; the JSON fallback is only for local development.
+
+Neon persistence does not add authentication. The current API is still unauthenticated, so keep the server bound to localhost until the access-control work in H-01/H-04 is complete.
 
 ## Reports and history
 

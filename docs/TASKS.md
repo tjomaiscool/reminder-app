@@ -13,17 +13,17 @@ These are planned tasks, not completed work. Owners, estimates, and delivery dat
 - **Acceptance:** an agreed short security/deployment design covers login/access, API protection, CORS/cookies or token handling, and secret storage.
 
 ### H-02 — PostgreSQL schema and migration plan (P0, depends on H-01)
-- [ ] Define `tasks` and `completions` entities preserving existing IDs, scheduled weekdays, weekly frequency, enabled status, date keys, and timestamps.
-- [ ] Select a SQL driver and migration mechanism appropriate for the existing Node/TypeScript server (avoid a framework rewrite unless justified).
-- [ ] Define constraints, indexes, deletion behavior, and idempotent migration steps.
-- [ ] Specify a one-time, validated JSON import/export or fresh-start choice; back up `data/db.json` before any migration.
-- [ ] Decide what database connection is used for app traffic vs migrations; use TLS and keep secrets server-side.
+- [x] Define `tasks` and `completions` entities preserving existing IDs, scheduled weekdays, weekly frequency, enabled status, date keys, and timestamps.
+- [x] Select a SQL driver and migration mechanism appropriate for the existing Node/TypeScript server (avoid a framework rewrite unless justified).
+- [x] Define constraints, indexes, deletion behavior, and idempotent migration steps.
+- [x] Specify a one-time, validated JSON import/export or fresh-start choice; back up `data/db.json` before any migration.
+- [x] Decide what database connection is used for app traffic vs migrations; use TLS and keep secrets server-side.
 - **Acceptance:** schema migrations can be applied on an empty Neon database and existing sample task/completion history can be imported and verified without losing historical report counts.
 
 ### H-03 — Replace file persistence behind current API (P0, depends on H-02)
-- [ ] Introduce a persistence interface or repository boundary and a PostgreSQL implementation.
-- [ ] Keep task IDs, completion history, API response contracts, and Monday–Sunday reporting behavior stable.
-- [ ] Preserve a documented local development path (local Postgres or an explicitly isolated development database).
+- [x] Introduce a persistence interface or repository boundary and a PostgreSQL implementation.
+- [x] Keep task IDs, completion history, API response contracts, and Monday–Sunday reporting behavior stable.
+- [x] Preserve a documented local development path (local Postgres or an explicitly isolated development database).
 - [ ] Add automated coverage for create/update/delete, completion/undo, historical reports, and data across process restarts.
 - **Acceptance:** app behavior is equivalent with Neon persistence and no production endpoint depends on `data/db.json`.
 

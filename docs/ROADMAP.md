@@ -1,6 +1,6 @@
 # Cadence — product and delivery roadmap
 
-**Status:** proposal for review · **Scope:** planning only (no application changes in this proposal)
+**Status:** proposal for review · **Scope:** deployment planning; Neon persistence is implemented locally but not yet provisioned or verified against a Neon project
 
 ## Vision
 
@@ -12,13 +12,14 @@ The near-term goal is **a usable hosted application**, not a native iOS/Android 
 
 - TypeScript browser client in `src/client/main.ts`; HTML/CSS under `public/`.
 - Node.js HTTP server in `src/server/server.ts` serves both the API and static assets on `127.0.0.1`, using `PORT` (default `4173`).
-- File-backed persistence in `src/server/database.ts` (`data/db.json`), intended for one person on one machine.
+- PostgreSQL persistence through `pg` when `DATABASE_URL` is set, with JSON-file persistence retained for local development.
+- A versioned schema migration and a validated, one-time JSON import command.
 - Today, Admin, and Reports views; current-week and historical completion data.
 - Responsive CSS breakpoints exist, but mobile usability has not yet been validated on actual devices.
 - No user accounts, authentication, web app manifest, service worker, push subscription flow, or production deployment configuration is documented in the current repository.
 - The client calls relative `/api/*` routes. The backend has a permissive `Access-Control-Allow-Origin: *` response header.
 
-**Consequences:** a Vercel + Render deployment needs an explicit frontend/API boundary; a hosted Render process must listen on `0.0.0.0:$PORT`; JSON-file persistence must be replaced by durable storage; and public access must not expose personal task data or unauthenticated write endpoints.
+**Consequences:** a Vercel + Render deployment needs an explicit frontend/API boundary; a hosted Render process must listen on `0.0.0.0:$PORT`; Render must use Neon rather than the local JSON fallback; and public access must not expose personal task data or unauthenticated write endpoints.
 
 ## Proposed production shape
 
@@ -125,7 +126,7 @@ Native mobile apps, multi-user sharing, elaborate analytics, payments, real-time
 
 - [ ] Confirm whether the first hosted release is strictly single-user or needs multiple distinct accounts.
 - [ ] Choose authentication and access policy before exposing task APIs.
-- [ ] Choose Neon migration tooling/schema library and the import strategy for existing JSON data.
+- [x] Choose Neon migration tooling/schema library and the import strategy for existing JSON data (`pg`, checked-in SQL migration, validated transactional JSON importer).
 - [ ] Choose same-origin Vercel rewrite vs explicit cross-origin API URL.
 - [ ] Confirm staging vs production environment separation and ownership of Vercel, Render, and Neon projects.
 - [ ] Confirm data backup/restore expectations and an initial supported mobile-device matrix.
