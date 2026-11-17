@@ -1,6 +1,6 @@
 # Cadence — product and delivery roadmap
 
-**Status:** proposal for review · **Scope:** planning only (no application changes in this proposal)
+**Status:** proposal for review · **Scope:** deployment planning; Neon persistence is implemented locally but not yet provisioned or verified against a Neon project
 
 ## Vision
 
@@ -11,14 +11,15 @@ The near-term goal is **a usable hosted application**, not a native iOS/Android 
 ## What exists today (verified in the repository)
 
 - TypeScript browser client in `src/client/main.ts`; HTML/CSS under `public/`.
-- Node.js HTTP server in `src/server/server.ts` serves both the API and static assets on `127.0.0.1`, using `PORT` (default `4173`).
-- File-backed persistence in `src/server/database.ts` (`data/db.json`), intended for one person on one machine.
+- Node.js HTTP server in `src/server/server.ts` serves both the API and static assets on `127.0.0.1` locally and `0.0.0.0` in production, using `PORT` (default `4173`). Production task API routes require a valid password session.
+- PostgreSQL persistence through `pg` when `DATABASE_URL` is set, with JSON-file persistence retained for local development.
+- A versioned schema migration and a validated, one-time JSON import command.
 - Today, Admin, and Reports views; current-week and historical completion data.
 - Responsive CSS breakpoints exist, but mobile usability has not yet been validated on actual devices.
-- No user accounts, authentication, web app manifest, service worker, push subscription flow, or production deployment configuration is documented in the current repository.
-- The client calls relative `/api/*` routes. The backend has a permissive `Access-Control-Allow-Origin: *` response header.
+- Single-user password authentication is implemented for the task API; production requires `APP_PASSWORD` and Neon `DATABASE_URL`. No user accounts, web app manifest, service worker, or push subscription flow exists. Render and Vercel configuration is prepared but not deployed.
+- The client calls relative `/api/*` routes. Vercel is configured to rewrite these to the Render API; permissive CORS headers have been removed.
 
-**Consequences:** a Vercel + Render deployment needs an explicit frontend/API boundary; a hosted Render process must listen on `0.0.0.0:$PORT`; JSON-file persistence must be replaced by durable storage; and public access must not expose personal task data or unauthenticated write endpoints.
+**Consequences:** a Vercel + Render deployment needs an explicit frontend/API boundary; a hosted Render process must listen on `0.0.0.0:$PORT`; Render must use Neon rather than the local JSON fallback; and public access must not expose personal task data or unauthenticated write endpoints.
 
 ## Proposed production shape
 
@@ -46,7 +47,7 @@ Later: Vercel-origin service worker <-> Push API / subscriptions
 - **Render** hosts the Node.js API and handles authorization. Health checks and logs are part of the deployment.
 - **Neon** hosts durable PostgreSQL tables. Keep credentials in Render secrets, never in browser code or Git.
 - **API routing decision:** Prefer keeping the current `/api/*` client contract using an appropriate Vercel rewrite, after verifying rewrite behavior and security. Otherwise configure a build-time API base URL and narrowly scoped CORS. Never combine credentialed requests with `Access-Control-Allow-Origin: *`.
-- **Authentication decision:** This is presently a single-user app with no accounts. Before making the backend publicly reachable with live data, choose and implement a minimal authenticated access model. Do not rely on an obscure URL, permissive CORS, or the app being “for one person” for protection.
+- **Authentication decision:** The first hosted version uses one shared password for its single user, with signed HTTP-only sessions. Do not rely on an obscure URL, permissive CORS, or the app being “for one person” for protection.
 
 ## Phases (in order)
 
@@ -54,7 +55,7 @@ Later: Vercel-origin service worker <-> Push API / subscriptions
 
 **Outcome:** the existing Today / Admin / Reports workflow works through a stable HTTPS URL with data stored in Neon, not on a local disk.
 
-1. Agree on access control for a private, initially single-user production deployment.
+1. Implement the selected access control for a private, single-user production deployment: one shared password.
 2. Define a PostgreSQL schema, migration process, and safe path from `data/db.json` without losing dates, task IDs, or completion history. Preserve local development ergonomics.
 3. Separate the static frontend build from the Node API runtime while preserving the existing `/api/*` behavior.
 4. Deploy the Node API to Render, bind to `0.0.0.0` and `PORT`, configure secrets and `APP_TIME_ZONE` explicitly, and verify `/api/health`.
@@ -123,9 +124,9 @@ Native mobile apps, multi-user sharing, elaborate analytics, payments, real-time
 
 ## Decisions to record before implementation
 
-- [ ] Confirm whether the first hosted release is strictly single-user or needs multiple distinct accounts.
-- [ ] Choose authentication and access policy before exposing task APIs.
-- [ ] Choose Neon migration tooling/schema library and the import strategy for existing JSON data.
+- [x] Confirm the first hosted release is strictly single-user.
+- [x] Choose a shared password with a signed, HTTP-only session cookie; authentication is implemented.
+- [x] Choose Neon migration tooling/schema library and the import strategy for existing JSON data (`pg`, checked-in SQL migration, validated transactional JSON importer).
 - [ ] Choose same-origin Vercel rewrite vs explicit cross-origin API URL.
 - [ ] Confirm staging vs production environment separation and ownership of Vercel, Render, and Neon projects.
 - [ ] Confirm data backup/restore expectations and an initial supported mobile-device matrix.
