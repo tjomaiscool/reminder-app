@@ -2039,6 +2039,80 @@ button:disabled {
   }
 }
 
+.login-screen {
+  display: grid;
+  min-height: 100vh;
+  place-items: center;
+  padding: 24px;
+  background: radial-gradient(circle at 50% 12%, #e8eee6 0, transparent 38%), var(--canvas);
+}
+
+.login-card {
+  width: min(440px, 100%);
+  padding: 36px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  box-shadow: var(--shadow-card);
+}
+
+.login-brand {
+  padding: 0;
+  margin-bottom: 38px;
+}
+
+.login-brand .brand-name {
+  color: var(--forest);
+}
+
+.login-brand .brand-subtitle {
+  color: var(--muted);
+}
+
+.login-card > .eyebrow {
+  margin: 0 0 9px;
+}
+
+.login-card h1 {
+  margin: 0;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(30px, 7vw, 38px);
+  font-weight: 500;
+  letter-spacing: -0.05em;
+}
+
+.login-copy {
+  margin: 9px 0 0;
+  color: var(--ink-soft);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.login-card form {
+  margin-top: 25px;
+}
+
+.login-submit {
+  width: 100%;
+  margin-top: 12px;
+}
+
+.login-error {
+  margin: 13px 0 0;
+  color: #a65e43;
+  font-size: 12px;
+}
+
+@media (max-width: 480px) {
+  .login-screen {
+    padding: 16px;
+  }
+
+  .login-card {
+    padding: 28px 24px;
+  }
+}
+
 /* History and weekly report views */
 .previous-days-section {
   margin-top: 39px;

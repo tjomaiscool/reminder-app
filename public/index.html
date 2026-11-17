@@ -8,6 +8,29 @@
     <link rel="stylesheet" href="/styles.css" />
   </head>
   <body>
+    <main class="login-screen" id="loginScreen" hidden>
+      <section class="login-card" aria-labelledby="loginTitle">
+        <div class="brand-lockup login-brand">
+          <div class="brand-mark" aria-hidden="true"><span></span></div>
+          <div>
+            <p class="brand-name">cadence</p>
+            <p class="brand-subtitle">Personal rhythm</p>
+          </div>
+        </div>
+        <p class="eyebrow">Private workspace</p>
+        <h1 id="loginTitle">Welcome back.</h1>
+        <p class="login-copy">Enter your password to open your reminders.</p>
+        <form id="loginForm">
+          <div class="form-field form-field-full">
+            <label for="loginPassword">Password</label>
+            <input id="loginPassword" name="password" type="password" autocomplete="current-password" maxlength="1024" required />
+          </div>
+          <p class="login-error" id="loginError" role="alert" hidden></p>
+          <button class="button button-primary login-submit" type="submit" id="loginButton">Sign in <span aria-hidden="true">→</span></button>
+        </form>
+      </section>
+    </main>
+
     <div class="app-shell" id="appShell">
       <aside class="sidebar" aria-label="Primary navigation">
         <div class="brand-lockup">
@@ -50,7 +73,7 @@
           <p class="sidebar-note-title">A little structure,<br />a lot more ease.</p>
           <p class="sidebar-note-copy">Your tasks stay local to this app and are saved automatically.</p>
         </div>
-        <div class="sidebar-footer">No account · No passwords</div>
+        <div class="sidebar-footer">Private single-user workspace</div>
       </aside>
 
       <main class="main-content">
@@ -62,6 +85,7 @@
           </div>
           <div class="topbar-actions">
             <span class="date-chip" id="topbarDate"></span>
+            <button class="button button-quiet" type="button" data-action="logout" id="logoutButton" hidden>Sign out</button>
             <button class="button button-primary" type="button" data-action="new-task">
               <span class="button-plus" aria-hidden="true">+</span>
               New task

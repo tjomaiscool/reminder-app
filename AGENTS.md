@@ -8,7 +8,7 @@ Cadence is a **single-user, periodic-task reminder app** written in TypeScript. 
 
 - `src/client/main.ts` — browser state, views, DOM rendering, and `/api/*` calls.
 - `public/index.html`, `public/styles.css` — static shell and styles, including mobile media queries.
-- `src/server/server.ts` — Node HTTP server, API routes, static asset serving.
+- `src/server/server.ts` — Node HTTP server, API routes, static asset serving, and password-protected production API access.
 - `src/server/domain.ts` — task scheduling, date/time-zone logic, weekly reports.
 - `src/server/database.ts` — current local JSON-file persistence.
 - `src/shared/types.ts` — API/domain data contracts shared by client and server.
@@ -23,7 +23,7 @@ npm start
 # open http://localhost:4173
 ```
 
-- The repository currently has `build`, `build:server`, `build:client`, `start`, and `dev` scripts; do not claim that automated unit/lint/test scripts exist until they are added.
+- The repository currently has `build`, `build:server`, `build:client`, `build:vercel`, `test`, `start`, and `dev` scripts.
 - Compile both client and server after TypeScript changes.
 - For behavior changes, add or propose focused automated tests; verify date boundaries and persisted history.
 - Keep changes small, reviewable, and scoped to the corresponding task ID in `docs/TASKS.md`.

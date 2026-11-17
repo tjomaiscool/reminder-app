@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: cadence-api
+    runtime: node
+    plan: free
+    buildCommand: npm ci && npm run build
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_VERSION
+        value: 24.18.0
+      - key: NODE_ENV
+        value: production
+      - key: APP_TIME_ZONE
+        value: Europe/Copenhagen
+      - key: APP_PASSWORD
+        sync: false
+      - key: DATABASE_URL
+        sync: false

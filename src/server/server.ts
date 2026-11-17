@@ -3,6 +3,7 @@ import { createServer, type IncomingMessage, type ServerResponse } from "node:ht
 import { readFile } from "node:fs/promises";
 import { extname, resolve, dirname, join, relative, sep } from "node:path";
 import { fileURLToPath } from "node:url";
+import { clearSessionCookie, createSessionCookie, getConfiguredPassword, hasValidSession, verifyPassword } from "./auth.js";
 import { Database } from "./database.js";
 import {
   getAdminTaskViews,
@@ -17,7 +18,9 @@ const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 const publicDirectory = join(projectRoot, "public");
 const clientDirectory = join(projectRoot, "dist", "client");
 const database = new Database(join(projectRoot, "data", "db.json"));
+const appPassword = getConfiguredPassword();
 const port = Number(process.env.PORT ?? 4173);
+const host = process.env.HOST ?? (process.env.NODE_ENV === "production" ? "0.0.0.0" : "127.0.0.1");
 
 await database.init();
 
@@ -34,8 +37,8 @@ const server = createServer((request, response) => {
   });
 });
 
-server.listen(port, "127.0.0.1", () => {
-  console.log(`Cadence is running at http://localhost:${port}`);
+server.listen(port, host, () => {
+  console.log(JSON.stringify({ event: "server_listening", host, port }));
 });
 
 async function handleRequest(request: IncomingMessage, response: ServerResponse): Promise<void> {
@@ -68,6 +71,58 @@ async function handleApiRequest(
 
   if (request.method === "GET" && requestUrl.pathname === "/api/health") {
     sendJson(response, 200, { ok: true });
+    return;
+  }
+
+  if (requestUrl.pathname === "/api/auth/session" && request.method === "GET") {
+    sendJson(response, 200, {
+      required: appPassword !== undefined,
+      authenticated: appPassword === undefined || hasValidSession(request.headers.cookie, appPassword),
+    });
+    return;
+  }
+
+  if (requestUrl.pathname === "/api/auth/login" && request.method === "POST") {
+    if (!hasTrustedMutationHeader(request)) {
+      sendJson(response, 403, { error: "Request could not be verified." });
+      return;
+    }
+    const configuredPassword = appPassword;
+    if (configuredPassword === undefined) {
+      sendJson(response, 404, { error: "Password login is not configured." });
+      return;
+    }
+    const body = await readJsonBody(request);
+    const candidate = getPasswordCandidate(body);
+    if (!verifyPassword(candidate, configuredPassword)) {
+      sendJson(response, 401, { error: "Password did not match." });
+      return;
+    }
+    sendJson(response, 200, { ok: true }, {
+      "set-cookie": createSessionCookie(configuredPassword, process.env.NODE_ENV === "production"),
+    });
+    return;
+  }
+
+  if (requestUrl.pathname === "/api/auth/logout" && request.method === "POST") {
+    if (!hasTrustedMutationHeader(request)) {
+      sendJson(response, 403, { error: "Request could not be verified." });
+      return;
+    }
+    sendJson(response, 204, null, {
+      "set-cookie": clearSessionCookie(process.env.NODE_ENV === "production"),
+    });
+    return;
+  }
+
+  const passwordForRequest = appPassword;
+  if (passwordForRequest !== undefined && !hasValidSession(request.headers.cookie, passwordForRequest)) {
+    sendJson(response, 401, { error: "Authentication required." });
+    return;
+  }
+
+  if (isMutationMethod(request.method ?? "") && !hasTrustedMutationHeader(request)) {
+    sendJson(response, 403, { error: "Request could not be verified." });
     return;
   }
 
@@ -215,17 +270,33 @@ async function readJsonBody(request: IncomingMessage): Promise<unknown> {
   }
 }
 
-function sendJson(response: ServerResponse, statusCode: number, payload: unknown): void {
+function sendJson(
+  response: ServerResponse,
+  statusCode: number,
+  payload: unknown,
+  headers: Record<string, string> = {},
+): void {
   const body = payload === null ? "" : JSON.stringify(payload);
   response.writeHead(statusCode, {
-    "access-control-allow-origin": "*",
-    "access-control-allow-headers": "content-type",
-    "access-control-allow-methods": "GET,POST,PATCH,DELETE,OPTIONS",
     "cache-control": "no-store",
     "content-type": "application/json; charset=utf-8",
     ...(body ? { "content-length": Buffer.byteLength(body) } : {}),
+    ...headers,
   });
   response.end(body);
+}
+
+function getPasswordCandidate(body: unknown): unknown {
+  if (typeof body !== "object" || body === null || Array.isArray(body)) return undefined;
+  return (body as { password?: unknown }).password;
+}
+
+function isMutationMethod(method: string): boolean {
+  return method === "POST" || method === "PATCH" || method === "DELETE" || method === "PUT";
+}
+
+function hasTrustedMutationHeader(request: IncomingMessage): boolean {
+  return request.headers["x-cadence-request"] === "1";
 }
 
 function getContentType(filePath: string): string {

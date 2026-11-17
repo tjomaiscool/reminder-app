@@ -9,7 +9,7 @@ Cadence is a personal periodic-task reminder app written entirely in TypeScript.
 - a Reports view for the current week and any past week;
 - an Admin view for creating and managing recurring tasks.
 
-There are no accounts or passwords. Do not expose the API publicly until an authentication model is implemented.
+Cadence supports one shared password for its single-user workspace. Production startup requires `APP_PASSWORD`; do not deploy without setting it as a Render secret.
 
 ## Run it
 
@@ -18,10 +18,21 @@ Install dependencies and build the TypeScript source:
 ```bash
 npm install
 npm run build
+npm test
 npm start
 ```
 
 Then open `http://localhost:4173`. Without `DATABASE_URL`, local development continues to use `data/db.json`, which is ignored by Git.
+
+## Password access
+
+Set `APP_PASSWORD` in the environment to enable password login. Use a randomly generated value of at least 32 UTF-8 bytes. Local development may omit it; production startup fails if it is missing. Changing the password invalidates existing sessions.
+
+For local password-protected development, add this to `.env`:
+
+```dotenv
+APP_PASSWORD="<your generated password>"
+```
 
 ## Use Neon PostgreSQL
 
@@ -54,7 +65,23 @@ node dist/server/import-json.js "C:\path\to\db.json"
 
 Set `DATABASE_URL` when starting the app to use Neon. The server verifies that the schema is already applied and fails on startup if it is missing. In production, `DATABASE_URL` is required; the JSON fallback is only for local development.
 
-Neon persistence does not add authentication. The current API is still unauthenticated, so keep the server bound to localhost until the access-control work in H-01/H-04 is complete.
+Local development remains bound to localhost. In production, `GET /api/health` stays public for Render's health check; task and report APIs require a valid password session.
+
+## Deployment preparation (Vercel + Render)
+
+Production uses a signed, HTTP-only, `Secure`, `SameSite=Strict` session cookie that expires after 30 days. Passwords must be at least 32 UTF-8 bytes. Mutating API requests also require a same-origin custom header; permissive CORS remains disabled. Keep the password in environment variables only; do not commit it or put it in Vercel settings.
+
+The Render Blueprint in `render.yaml` configures the Node service, health check, time zone, and required `APP_PASSWORD` and `DATABASE_URL` secrets. Its service name is `cadence-api`; `vercel.json` routes `/api/*` through Vercel to that Render hostname. If Render assigns a different service hostname, update the Vercel rewrite destination.
+
+The Vercel build assembles `public/` and the compiled browser client into `dist/vercel/`:
+
+```powershell
+npm run build:vercel
+```
+
+Import the repository into Vercel with the **Other** framework preset. `vercel.json` configures the build command, output directory, and `/api/*` rewrite; no API secret belongs in Vercel.
+
+In Render, set `APP_PASSWORD` to your chosen password and `DATABASE_URL` to the Neon pooled connection string. Apply migrations separately from a trusted machine using the direct Neon connection string and `npm run db:migrate`; never put the password or either connection string in Vercel settings or source control. To enable password protection locally too, add `APP_PASSWORD` to `.env`. Changing the password invalidates existing sessions. The Render free plan may spin down while idle, but task persistence remains in Neon.
 
 ## Reports and history
 

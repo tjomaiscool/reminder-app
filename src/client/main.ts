@@ -16,6 +16,7 @@ const state: {
   reportWeekStart: string | null;
   editingTaskId: string | null;
   loading: boolean;
+  authRequired: boolean;
 } = {
   view: "today",
   today: null,
@@ -24,8 +25,16 @@ const state: {
   reportWeekStart: null,
   editingTaskId: null,
   loading: true,
+  authRequired: false,
 };
 
+const appShell = document.querySelector<HTMLDivElement>("#appShell")!;
+const loginScreen = document.querySelector<HTMLElement>("#loginScreen")!;
+const loginForm = document.querySelector<HTMLFormElement>("#loginForm")!;
+const loginPassword = document.querySelector<HTMLInputElement>("#loginPassword")!;
+const loginButton = document.querySelector<HTMLButtonElement>("#loginButton")!;
+const loginError = document.querySelector<HTMLParagraphElement>("#loginError")!;
+const logoutButton = document.querySelector<HTMLButtonElement>("#logoutButton")!;
 const pageContent = document.querySelector<HTMLDivElement>("#pageContent")!;
 const modalBackdrop = document.querySelector<HTMLDivElement>("#modalBackdrop")!;
 const taskForm = document.querySelector<HTMLFormElement>("#taskForm")!;
@@ -44,12 +53,12 @@ const topbarDate = document.querySelector<HTMLSpanElement>("#topbarDate")!;
 const navTodayCount = document.querySelector<HTMLSpanElement>("#navTodayCount")!;
 const navTaskCount = document.querySelector<HTMLSpanElement>("#navTaskCount")!;
 
-if (!pageContent || !modalBackdrop || !taskForm || !taskNameInput || !taskDescriptionInput || !weeklyFrequencyInput || !taskEnabledInput || !taskEnabledLabel || !formError || !modalTitle || !modalEyebrow || !saveTaskButton || !toastRegion || !breadcrumbPage || !topbarDate || !navTodayCount || !navTaskCount) {
+if (!appShell || !loginScreen || !loginForm || !loginPassword || !loginButton || !loginError || !logoutButton || !pageContent || !modalBackdrop || !taskForm || !taskNameInput || !taskDescriptionInput || !weeklyFrequencyInput || !taskEnabledInput || !taskEnabledLabel || !formError || !modalTitle || !modalEyebrow || !saveTaskButton || !toastRegion || !breadcrumbPage || !topbarDate || !navTodayCount || !navTaskCount) {
   throw new Error("Cadence could not find its application shell.");
 }
 
 bindEvents();
-void refreshData();
+void initialize();
 
 function bindEvents(): void {
   document.addEventListener("click", (event) => {
@@ -70,6 +79,11 @@ function bindEvents(): void {
   taskForm.addEventListener("submit", (event) => {
     event.preventDefault();
     void saveTask();
+  });
+
+  loginForm.addEventListener("submit", (event) => {
+    event.preventDefault();
+    void signIn();
   });
 
   document.addEventListener("submit", (event) => {
@@ -95,6 +109,21 @@ function bindEvents(): void {
   document.addEventListener("keydown", (event) => {
     if (event.key === "Escape" && !modalBackdrop.hidden) closeModal();
   });
+}
+
+async function initialize(): Promise<void> {
+  try {
+    const session = await apiRequest<{ required: boolean; authenticated: boolean }>("/api/auth/session");
+    state.authRequired = session.required;
+    if (!session.authenticated) {
+      showLogin();
+      return;
+    }
+    await refreshData();
+  } catch (error) {
+    state.loading = false;
+    renderError(error instanceof Error ? error.message : "The app could not check your sign-in.");
+  }
 }
 
 async function refreshData(showLoading = true): Promise<void> {
@@ -155,6 +184,7 @@ function renderChrome(): void {
   topbarDate.textContent = today ? formatShortDate(today) : "";
   navTodayCount.textContent = String((state.today?.lanes.must.length ?? 0) + (state.today?.lanes.optional.length ?? 0));
   navTaskCount.textContent = String(state.adminTasks.filter((task) => task.enabled).length);
+  logoutButton.hidden = !state.authRequired;
 
   document.querySelectorAll<HTMLElement>("[data-view]").forEach((button) => {
     const active = button.dataset.view === state.view;
@@ -481,6 +511,10 @@ function renderAdminEmpty(): string {
 }
 
 async function handleAction(action: string, id?: string, dateKey?: string, completedValue?: string): Promise<void> {
+  if (action === "logout") {
+    await signOut();
+    return;
+  }
   if (action === "new-task") {
     openModal();
     return;
@@ -531,6 +565,55 @@ async function handleAction(action: string, id?: string, dateKey?: string, compl
   if (action === "retry") {
     await refreshData();
   }
+}
+
+async function signIn(): Promise<void> {
+  if (!loginForm.reportValidity()) return;
+
+  loginButton.disabled = true;
+  loginError.hidden = true;
+  try {
+    await apiRequest("/api/auth/login", {
+      method: "POST",
+      body: JSON.stringify({ password: loginPassword.value }),
+      headers: { "content-type": "application/json" },
+    });
+    state.authRequired = true;
+    loginScreen.hidden = true;
+    appShell.hidden = false;
+    loginPassword.value = "";
+    await refreshData();
+  } catch (error) {
+    loginError.textContent = getErrorMessage(error);
+    loginError.hidden = false;
+    loginPassword.select();
+  } finally {
+    loginButton.disabled = false;
+  }
+}
+
+async function signOut(): Promise<void> {
+  try {
+    await apiRequest("/api/auth/logout", { method: "POST" });
+    showLogin();
+  } catch (error) {
+    showToast("Could not sign out", getErrorMessage(error));
+  }
+}
+
+function showLogin(): void {
+  state.today = null;
+  state.adminTasks = [];
+  state.report = null;
+  state.reportWeekStart = null;
+  state.loading = true;
+  pageContent.replaceChildren();
+  appShell.hidden = true;
+  loginScreen.hidden = false;
+  loginPassword.value = "";
+  loginError.hidden = true;
+  loginError.textContent = "";
+  window.requestAnimationFrame(() => loginPassword.focus());
 }
 
 async function toggleCompletion(taskId: string): Promise<void> {
@@ -717,7 +800,10 @@ function renderError(message: string): void {
 }
 
 async function apiRequest<T = unknown>(url: string, options: RequestInit = {}): Promise<T> {
-  const response = await fetch(url, options);
+  const headers = new Headers(options.headers);
+  const method = (options.method ?? "GET").toUpperCase();
+  if (method !== "GET" && method !== "HEAD") headers.set("x-cadence-request", "1");
+  const response = await fetch(url, { ...options, headers, credentials: "same-origin" });
   const text = await response.text();
   let body: unknown = null;
   if (text) {
@@ -728,6 +814,7 @@ async function apiRequest<T = unknown>(url: string, options: RequestInit = {}): 
     }
   }
   if (!response.ok) {
+    if (response.status === 401 && url !== "/api/auth/login") showLogin();
     const message = isRecord(body) && typeof body.error === "string" ? body.error : `Request failed (${response.status}).`;
     throw new Error(message);
   }
