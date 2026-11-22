@@ -4,7 +4,7 @@
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "https://cadence-api.onrender.com/api/:path*"
+      "destination": "https://cadence-api-uvs1.onrender.com/api/:path*"
     }
   ]
 }
