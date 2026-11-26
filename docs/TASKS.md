@@ -7,39 +7,39 @@ These are planned tasks, not completed work. Owners, estimates, and delivery dat
 ## Phase 1 — Hosted application (must complete first)
 
 ### H-01 — Production access and configuration decision (P0, blocker)
-- [ ] Decide the initial identity/authentication model for a private single-user app; explicitly rule out public unauthenticated CRUD access.
-- [ ] Define local, staging (if used), and production environment variables and secret handling.
-- [ ] Decide whether frontend-to-API traffic uses a Vercel rewrite or a configured cross-origin API URL.
+- [x] Decide the initial identity/authentication model: one shared password for a private single-user app; no public unauthenticated CRUD access.
+- [x] Define local and production environment variables and secret handling (staging is not configured).
+- [x] Use a same-origin Vercel rewrite to route `/api/*` to Render.
 - **Acceptance:** an agreed short security/deployment design covers login/access, API protection, CORS/cookies or token handling, and secret storage.
 
 ### H-02 — PostgreSQL schema and migration plan (P0, depends on H-01)
-- [ ] Define `tasks` and `completions` entities preserving existing IDs, scheduled weekdays, weekly frequency, enabled status, date keys, and timestamps.
-- [ ] Select a SQL driver and migration mechanism appropriate for the existing Node/TypeScript server (avoid a framework rewrite unless justified).
-- [ ] Define constraints, indexes, deletion behavior, and idempotent migration steps.
-- [ ] Specify a one-time, validated JSON import/export or fresh-start choice; back up `data/db.json` before any migration.
-- [ ] Decide what database connection is used for app traffic vs migrations; use TLS and keep secrets server-side.
+- [x] Define `tasks` and `completions` entities preserving existing IDs, scheduled weekdays, weekly frequency, enabled status, date keys, and timestamps.
+- [x] Select a SQL driver and migration mechanism appropriate for the existing Node/TypeScript server (avoid a framework rewrite unless justified).
+- [x] Define constraints, indexes, deletion behavior, and idempotent migration steps.
+- [x] Specify a one-time, validated JSON import/export or fresh-start choice; back up `data/db.json` before any migration.
+- [x] Decide what database connection is used for app traffic vs migrations; use TLS and keep secrets server-side.
 - **Acceptance:** schema migrations can be applied on an empty Neon database and existing sample task/completion history can be imported and verified without losing historical report counts.
 
 ### H-03 — Replace file persistence behind current API (P0, depends on H-02)
-- [ ] Introduce a persistence interface or repository boundary and a PostgreSQL implementation.
-- [ ] Keep task IDs, completion history, API response contracts, and Monday–Sunday reporting behavior stable.
-- [ ] Preserve a documented local development path (local Postgres or an explicitly isolated development database).
+- [x] Introduce a persistence interface or repository boundary and a PostgreSQL implementation.
+- [x] Keep task IDs, completion history, API response contracts, and Monday–Sunday reporting behavior stable.
+- [x] Preserve a documented local development path (local Postgres or an explicitly isolated development database).
 - [ ] Add automated coverage for create/update/delete, completion/undo, historical reports, and data across process restarts.
 - **Acceptance:** app behavior is equivalent with Neon persistence and no production endpoint depends on `data/db.json`.
 
 ### H-04 — Make the HTTP API deployable and protected (P0, depends on H-01)
-- [ ] Configure the server to listen on `0.0.0.0` with `process.env.PORT` on Render (current code binds to `127.0.0.1`).
-- [ ] Implement the approved authentication/authorization strategy for private task endpoints.
-- [ ] Replace permissive CORS behavior with the approved same-origin or explicit-origin approach; handle preflight correctly if cross-origin.
-- [ ] Preserve `GET /api/health` without exposing private data; add safe error handling and structured startup logging.
-- [ ] Validate required environment variables and production configuration on startup.
+- [x] Configure the server to listen on `0.0.0.0` with `process.env.PORT` in production (local development remains on `127.0.0.1`).
+- [x] Implement the approved single-password authentication/authorization strategy for private task endpoints.
+- [x] Remove permissive CORS headers; same-origin Vercel rewrites do not need cross-origin access.
+- [x] Preserve `GET /api/health` without exposing private data; retain safe error handling and add structured startup logging.
+- [x] Validate required `APP_PASSWORD` and database configuration on startup.
 - **Acceptance:** API starts on Render, `/api/health` succeeds, unauthenticated access to protected endpoints is rejected, and no secrets are committed.
 
 ### H-05 — Build a deployable static frontend (P0)
-- [ ] Build `src/client/main.ts` for the browser and assemble `public/` + compiled client into one deterministic static output directory.
-- [ ] Keep relative `/api/*` requests working through the chosen routing strategy, or configure the API URL explicitly at build/runtime.
+- [x] Build `src/client/main.ts` for the browser and assemble `public/` + compiled client into `dist/vercel/`.
+- [x] Keep relative `/api/*` requests working through the Vercel rewrite.
 - [ ] Ensure the HTML/CSS/client file paths and caching behavior work from Vercel's URL.
-- [ ] Document build and output settings (Vercel framework preset can be `Other`).
+- [x] Document build and output settings (Vercel framework preset: `Other`).
 - **Acceptance:** generated static output can be served independently of the Node process and communicates with the configured API.
 
 ### H-06 — Provision Neon and deploy the Render API (P0, depends on H-02–H-04)
@@ -78,6 +78,7 @@ These are planned tasks, not completed work. Owners, estimates, and delivery dat
 - [ ] Validate one-handed completion/undo, readable status, simple task creation/editing, and report navigation.
 - [ ] Test accessibility basics: focus, labels, contrast, reduced motion where relevant, and error states.
 - **Acceptance:** no horizontal scroll or zoom required for the core workflow on the target devices.
+- **Implementation started:** Today task cards use a mobile-only swipe slider for completing and undoing a task; desktop retains its Complete button. Small-screen typography is larger across Today, Admin, Reports, and dialogs; spacing, sticky navigation, touch targets, report controls, and task dialogs are tuned for narrow widths and safe areas. Device validation remains open.
 
 ## Phase 3 — Installable PWA (after mobile usability)
 

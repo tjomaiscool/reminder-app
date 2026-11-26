@@ -1,7 +1,9 @@
+import "dotenv/config";
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
 import { readFile } from "node:fs/promises";
 import { extname, resolve, dirname, join, relative, sep } from "node:path";
 import { fileURLToPath } from "node:url";
+import { clearSessionCookie, createSessionCookie, getConfiguredPassword, hasValidSession, verifyPassword } from "./auth.js";
 import { Database } from "./database.js";
 import {
   getAdminTaskViews,
@@ -16,7 +18,9 @@ const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 const publicDirectory = join(projectRoot, "public");
 const clientDirectory = join(projectRoot, "dist", "client");
 const database = new Database(join(projectRoot, "data", "db.json"));
+const appPassword = getConfiguredPassword();
 const port = Number(process.env.PORT ?? 4173);
+const host = process.env.HOST ?? (process.env.NODE_ENV === "production" ? "0.0.0.0" : "127.0.0.1");
 
 await database.init();
 
@@ -33,8 +37,8 @@ const server = createServer((request, response) => {
   });
 });
 
-server.listen(port, "127.0.0.1", () => {
-  console.log(`Cadence is running at http://localhost:${port}`);
+server.listen(port, host, () => {
+  console.log(JSON.stringify({ event: "server_listening", host, port }));
 });
 
 async function handleRequest(request: IncomingMessage, response: ServerResponse): Promise<void> {
@@ -70,15 +74,67 @@ async function handleApiRequest(
     return;
   }
 
+  if (requestUrl.pathname === "/api/auth/session" && request.method === "GET") {
+    sendJson(response, 200, {
+      required: appPassword !== undefined,
+      authenticated: appPassword === undefined || hasValidSession(request.headers.cookie, appPassword),
+    });
+    return;
+  }
+
+  if (requestUrl.pathname === "/api/auth/login" && request.method === "POST") {
+    if (!hasTrustedMutationHeader(request)) {
+      sendJson(response, 403, { error: "Request could not be verified." });
+      return;
+    }
+    const configuredPassword = appPassword;
+    if (configuredPassword === undefined) {
+      sendJson(response, 404, { error: "Password login is not configured." });
+      return;
+    }
+    const body = await readJsonBody(request);
+    const candidate = getPasswordCandidate(body);
+    if (!verifyPassword(candidate, configuredPassword)) {
+      sendJson(response, 401, { error: "Password did not match." });
+      return;
+    }
+    sendJson(response, 200, { ok: true }, {
+      "set-cookie": createSessionCookie(configuredPassword, process.env.NODE_ENV === "production"),
+    });
+    return;
+  }
+
+  if (requestUrl.pathname === "/api/auth/logout" && request.method === "POST") {
+    if (!hasTrustedMutationHeader(request)) {
+      sendJson(response, 403, { error: "Request could not be verified." });
+      return;
+    }
+    sendJson(response, 204, null, {
+      "set-cookie": clearSessionCookie(process.env.NODE_ENV === "production"),
+    });
+    return;
+  }
+
+  const passwordForRequest = appPassword;
+  if (passwordForRequest !== undefined && !hasValidSession(request.headers.cookie, passwordForRequest)) {
+    sendJson(response, 401, { error: "Authentication required." });
+    return;
+  }
+
+  if (isMutationMethod(request.method ?? "") && !hasTrustedMutationHeader(request)) {
+    sendJson(response, 403, { error: "Request could not be verified." });
+    return;
+  }
+
   if (request.method === "GET" && requestUrl.pathname === "/api/today") {
-    sendJson(response, 200, getTodayResponse(toDatabaseFile()));
+    sendJson(response, 200, getTodayResponse(await database.getSnapshot()));
     return;
   }
 
   if (request.method === "GET" && requestUrl.pathname === "/api/reports") {
     const requestedWeekStart = requestUrl.searchParams.get("weekStart") ?? undefined;
     try {
-      sendJson(response, 200, getWeeklyReport(toDatabaseFile(), requestedWeekStart));
+      sendJson(response, 200, getWeeklyReport(await database.getSnapshot(), requestedWeekStart));
     } catch (error) {
       throw new HttpError(400, error instanceof Error ? error.message : "Invalid report week.");
     }
@@ -87,7 +143,7 @@ async function handleApiRequest(
 
   if (request.method === "GET" && requestUrl.pathname === "/api/tasks") {
     const today = getTodayKey();
-    sendJson(response, 200, { today, tasks: getAdminTaskViews(toDatabaseFile(), today) });
+    sendJson(response, 200, { today, tasks: getAdminTaskViews(await database.getSnapshot(), today) });
     return;
   }
 
@@ -105,7 +161,7 @@ async function handleApiRequest(
   }
 
   const taskId = decodeURIComponent(pathParts[2]);
-  const task = database.findTask(taskId);
+  const task = await database.findTask(taskId);
   if (!task) {
     sendJson(response, 404, { error: "Task not found." });
     return;
@@ -114,17 +170,15 @@ async function handleApiRequest(
   if (pathParts[3] === "completions" && pathParts[4] === "today") {
     const today = getTodayKey();
     if (request.method === "POST") {
-      const alreadyCompleted = database.completions.some(
-        (completion) => completion.taskId === taskId && completion.dateKey === today,
-      );
+      const alreadyCompleted = await database.hasCompletion(taskId, today);
       if (!alreadyCompleted) await database.addCompletion(taskId, today);
-      sendJson(response, 200, getTodayResponse(toDatabaseFile(), today));
+      sendJson(response, 200, getTodayResponse(await database.getSnapshot(), today));
       return;
     }
 
     if (request.method === "DELETE") {
       await database.removeLatestCompletion(taskId, today);
-      sendJson(response, 200, getTodayResponse(toDatabaseFile(), today));
+      sendJson(response, 200, getTodayResponse(await database.getSnapshot(), today));
       return;
     }
   }
@@ -133,9 +187,7 @@ async function handleApiRequest(
     const body = await readJsonBody(request);
     const dateKey = getCompletionDate(body);
     await assertCompletableDate(dateKey);
-    const alreadyCompleted = database.completions.some(
-      (completion) => completion.taskId === taskId && completion.dateKey === dateKey,
-    );
+    const alreadyCompleted = await database.hasCompletion(taskId, dateKey);
     const completion = alreadyCompleted ? null : await database.addCompletion(taskId, dateKey);
     sendJson(response, 200, { completion });
     return;
@@ -190,14 +242,6 @@ async function serveStatic(pathname: string, response: ServerResponse, headOnly:
   }
 }
 
-function toDatabaseFile() {
-  return {
-    version: 1 as const,
-    tasks: database.tasks,
-    completions: database.completions,
-  };
-}
-
 function safeResolve(baseDirectory: string, requestedPath: string): string {
   const targetPath = resolve(baseDirectory, requestedPath);
   const relativePath = relative(baseDirectory, targetPath);
@@ -226,17 +270,33 @@ async function readJsonBody(request: IncomingMessage): Promise<unknown> {
   }
 }
 
-function sendJson(response: ServerResponse, statusCode: number, payload: unknown): void {
+function sendJson(
+  response: ServerResponse,
+  statusCode: number,
+  payload: unknown,
+  headers: Record<string, string> = {},
+): void {
   const body = payload === null ? "" : JSON.stringify(payload);
   response.writeHead(statusCode, {
-    "access-control-allow-origin": "*",
-    "access-control-allow-headers": "content-type",
-    "access-control-allow-methods": "GET,POST,PATCH,DELETE,OPTIONS",
     "cache-control": "no-store",
     "content-type": "application/json; charset=utf-8",
     ...(body ? { "content-length": Buffer.byteLength(body) } : {}),
+    ...headers,
   });
   response.end(body);
+}
+
+function getPasswordCandidate(body: unknown): unknown {
+  if (typeof body !== "object" || body === null || Array.isArray(body)) return undefined;
+  return (body as { password?: unknown }).password;
+}
+
+function isMutationMethod(method: string): boolean {
+  return method === "POST" || method === "PATCH" || method === "DELETE" || method === "PUT";
+}
+
+function hasTrustedMutationHeader(request: IncomingMessage): boolean {
+  return request.headers["x-cadence-request"] === "1";
 }
 
 function getContentType(filePath: string): string {

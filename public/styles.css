@@ -1006,6 +1006,10 @@ button:disabled {
   height: 12px;
 }
 
+.completion-slider {
+  display: none;
+}
+
 .lane-empty {
   display: flex;
   min-height: 124px;
@@ -1827,6 +1831,7 @@ button:disabled {
   }
 }
 
+
 @media (max-width: 620px) {
   .sidebar {
     padding: 14px 15px 11px;
@@ -1951,6 +1956,158 @@ button:disabled {
     grid-template-columns: 1fr;
   }
 
+  .task-card {
+    padding: 17px 16px 15px;
+    border-radius: 15px;
+  }
+
+  .task-card h3 {
+    font-size: 16px;
+    line-height: 1.35;
+  }
+
+  .task-card-description {
+    margin-top: 6px;
+    color: #78877e;
+    font-size: 12px;
+    line-height: 1.5;
+  }
+
+  .task-card-meta {
+    margin-top: 14px;
+    font-size: 11px;
+  }
+
+  .task-card-progress {
+    height: 5px;
+    margin-top: 13px;
+  }
+
+  .task-card-footer {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 11px;
+    margin-top: 14px;
+  }
+
+  .task-card-status {
+    font-size: 11px;
+  }
+
+  .task-card-footer > .complete-button {
+    display: none;
+  }
+
+  .completion-slider {
+    --slider-progress: 0%;
+    --slider-offset: 0px;
+    position: relative;
+    display: flex;
+    width: 100%;
+    min-height: 52px;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    padding: 4px;
+    color: #68836d;
+    background: #eff5ed;
+    border: 1px solid #dce9da;
+    border-radius: 12px;
+    touch-action: pan-y;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  .completion-slider-track {
+    position: absolute;
+    inset: 4px auto 4px 4px;
+    width: var(--slider-progress);
+    max-width: calc(100% - 8px);
+    background: #dcebd9;
+    border-radius: 9px;
+    transition: width 180ms ease;
+  }
+
+  .completion-slider-label {
+    position: relative;
+    z-index: 1;
+    padding: 0 48px;
+    font-size: 12px;
+    font-weight: 760;
+    letter-spacing: -0.01em;
+    pointer-events: none;
+  }
+
+  .completion-slider-thumb {
+    position: absolute;
+    z-index: 2;
+    top: 4px;
+    left: 4px;
+    display: grid;
+    width: 42px;
+    height: 42px;
+    place-items: center;
+    color: #fff;
+    background: #719779;
+    border-radius: 9px;
+    box-shadow: 0 2px 7px rgba(36, 65, 43, 0.18);
+    transform: translateX(var(--slider-offset));
+    transition: transform 180ms ease, background 160ms ease;
+    pointer-events: none;
+  }
+
+  .completion-slider-thumb svg {
+    width: 17px;
+    height: 17px;
+  }
+
+  .completion-slider.is-completed {
+    --slider-progress: 100%;
+    color: #4e7657;
+    background: #e7f1e4;
+    border-color: #d3e5d1;
+  }
+
+  .completion-slider.is-completed .completion-slider-track {
+    right: 4px;
+    left: auto;
+    width: var(--slider-progress);
+  }
+
+  .completion-slider.is-completed .completion-slider-thumb {
+    left: auto;
+    right: 4px;
+    background: #5e8868;
+  }
+
+  .completion-slider.is-dragging .completion-slider-track,
+  .completion-slider.is-dragging .completion-slider-thumb {
+    transition: none;
+  }
+
+  .completion-slider:focus-visible {
+    outline: 3px solid rgba(92, 137, 100, 0.38);
+    outline-offset: 2px;
+  }
+
+  .completion-slider:disabled {
+    color: #929e95;
+    background: #f3f5f2;
+    border-color: #e7ebe6;
+  }
+
+  .completion-slider:disabled .completion-slider-thumb {
+    background: #aab5ac;
+    box-shadow: none;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .completion-slider-track,
+    .completion-slider-thumb {
+      transition: none;
+    }
+  }
+
   .admin-heading {
     align-items: flex-start;
     flex-direction: column;
@@ -2036,6 +2193,467 @@ button:disabled {
     right: 16px;
     bottom: 16px;
     width: calc(100vw - 32px);
+  }
+}
+
+.login-screen {
+  display: grid;
+  min-height: 100vh;
+  place-items: center;
+  padding: 24px;
+  background: radial-gradient(circle at 50% 12%, #e8eee6 0, transparent 38%), var(--canvas);
+}
+
+.login-card {
+  width: min(440px, 100%);
+  padding: 36px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  box-shadow: var(--shadow-card);
+}
+
+.login-brand {
+  padding: 0;
+  margin-bottom: 38px;
+}
+
+.login-brand .brand-name {
+  color: var(--forest);
+}
+
+.login-brand .brand-subtitle {
+  color: var(--muted);
+}
+
+.login-card > .eyebrow {
+  margin: 0 0 9px;
+}
+
+.login-card h1 {
+  margin: 0;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(30px, 7vw, 38px);
+  font-weight: 500;
+  letter-spacing: -0.05em;
+}
+
+.login-copy {
+  margin: 9px 0 0;
+  color: var(--ink-soft);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.login-card form {
+  margin-top: 25px;
+}
+
+.login-submit {
+  width: 100%;
+  margin-top: 12px;
+}
+
+.login-error {
+  margin: 13px 0 0;
+  color: #a65e43;
+  font-size: 12px;
+}
+
+@media (max-width: 480px) {
+  .sidebar {
+    position: sticky;
+    z-index: 10;
+    top: 0;
+    gap: 8px;
+    padding: max(9px, env(safe-area-inset-top)) 12px 9px;
+    padding-right: max(12px, env(safe-area-inset-right));
+    padding-left: max(12px, env(safe-area-inset-left));
+    background: var(--forest);
+  }
+
+  .brand-lockup {
+    gap: 7px;
+  }
+
+  .brand-mark {
+    width: 25px;
+    height: 25px;
+  }
+
+  .brand-name {
+    font-size: 16px;
+  }
+
+  .brand-subtitle {
+    font-size: 7px;
+  }
+
+  .primary-nav {
+    gap: 2px;
+  }
+
+  .nav-item {
+    min-height: 42px;
+    gap: 4px;
+    padding: 0 6px;
+    border-radius: 9px;
+  }
+
+  .nav-item-label {
+    font-size: 9px;
+  }
+
+  .nav-count {
+    min-width: 16px;
+    height: 16px;
+    margin-left: 0;
+    padding: 0 3px;
+    border-radius: 6px;
+    font-size: 8px;
+  }
+
+  .topbar {
+    min-height: 62px;
+    gap: 8px;
+    padding: 8px 12px;
+    padding-right: max(12px, env(safe-area-inset-right));
+    padding-left: max(12px, env(safe-area-inset-left));
+  }
+
+  .topbar-actions {
+    gap: 6px;
+  }
+
+  .topbar-actions .button {
+    min-height: 42px;
+    padding: 0 10px;
+    font-size: 10px;
+  }
+
+  .content-wrap {
+    width: calc(100% - max(24px, env(safe-area-inset-left) + env(safe-area-inset-right)));
+    padding: 14px 0 calc(40px + env(safe-area-inset-bottom));
+  }
+
+  .welcome-panel {
+    min-height: 0;
+    padding: 23px 20px;
+    border-radius: 16px;
+  }
+
+  .welcome-copy h1 {
+    max-width: 100%;
+    font-size: clamp(30px, 9vw, 36px);
+    line-height: 1.06;
+  }
+
+  .welcome-copy p:not(.eyebrow) {
+    font-size: 12px;
+  }
+
+  .welcome-actions {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 11px;
+    margin-top: 18px;
+  }
+
+  .welcome-actions .button-primary {
+    min-height: 44px;
+  }
+
+  .week-orbit {
+    display: none;
+  }
+
+  .summary-grid,
+  .admin-overview,
+  .report-summary {
+    gap: 8px;
+  }
+
+  .summary-card {
+    min-height: 105px;
+    padding: 12px;
+    border-radius: 12px;
+  }
+
+  .summary-card-label {
+    font-size: 8px;
+    letter-spacing: 0.07em;
+  }
+
+  .summary-card-icon {
+    width: 24px;
+    height: 24px;
+  }
+
+  .summary-card-value {
+    margin-top: 13px;
+    font-size: 21px;
+  }
+
+  .summary-card-highlight .summary-card-value {
+    font-size: 16px;
+  }
+
+  .summary-card-meta {
+    font-size: 9px;
+  }
+
+  .section-heading h2,
+  .admin-heading h1 {
+    font-size: 23px;
+  }
+
+  .lane {
+    padding: 14px 12px 12px;
+    border-radius: 13px;
+  }
+
+  .task-card {
+    padding: 15px 13px 14px;
+  }
+
+  .task-card h3 {
+    font-size: 15px;
+  }
+
+  .completion-slider {
+    min-height: 50px;
+  }
+
+  .completion-slider-label {
+    padding: 0 44px;
+    font-size: 11px;
+  }
+
+  .previous-day-item {
+    gap: 9px;
+    padding: 11px;
+  }
+
+  .previous-day-item .complete-button {
+    min-height: 40px;
+    font-size: 10px;
+  }
+
+  .report-heading h1 {
+    font-size: 29px;
+  }
+
+  .report-week-controls {
+    width: 100%;
+  }
+
+  .week-nav-button {
+    width: 42px;
+    height: 42px;
+    flex: 0 0 auto;
+  }
+
+  .week-picker-label {
+    min-height: 44px;
+    padding: 0 9px;
+  }
+
+  .week-picker-label input {
+    font-size: 16px;
+  }
+
+  .report-stat {
+    gap: 9px;
+    padding: 11px;
+  }
+
+  .report-stat div > span {
+    font-size: 8px;
+    letter-spacing: 0.06em;
+  }
+
+  .report-stat small {
+    font-size: 8px;
+  }
+
+  .report-occurrence-button {
+    min-height: 36px;
+    padding: 0 5px;
+    font-size: 10px;
+  }
+
+  .report-task-row {
+    gap: 12px;
+    padding: 13px;
+  }
+
+  .backfill-panel {
+    gap: 16px;
+    padding: 14px;
+  }
+
+  .backfill-form input,
+  .backfill-form select,
+  .backfill-form .button {
+    min-height: 44px;
+  }
+
+  .backfill-form input,
+  .backfill-form select {
+    font-size: 16px;
+  }
+
+  .admin-stat {
+    min-width: 0;
+    padding: 11px 9px;
+  }
+
+  .admin-stat-label {
+    font-size: 8px;
+    letter-spacing: 0.04em;
+  }
+
+  .admin-task-row {
+    gap: 8px;
+    padding: 12px 10px;
+  }
+
+  .admin-task-name {
+    font-size: 12px;
+  }
+
+  .admin-task-meta {
+    font-size: 9px;
+    white-space: normal;
+  }
+
+  .admin-task-actions {
+    gap: 1px;
+  }
+
+  .row-action {
+    width: 38px;
+    height: 40px;
+  }
+
+  .toggle-control {
+    min-height: 40px;
+    padding: 0 3px;
+  }
+
+  .modal-backdrop {
+    align-items: end;
+    padding: max(8px, env(safe-area-inset-top)) 8px max(8px, env(safe-area-inset-bottom));
+    padding-right: max(8px, env(safe-area-inset-right));
+    padding-left: max(8px, env(safe-area-inset-left));
+  }
+
+  .modal {
+    width: 100%;
+    max-height: calc(100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 16px);
+    max-height: calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 16px);
+    padding: 22px 18px max(18px, env(safe-area-inset-bottom));
+    border-radius: 18px 18px 12px 12px;
+    overscroll-behavior: contain;
+  }
+
+  .modal-heading {
+    margin-bottom: 19px;
+  }
+
+  .modal-close {
+    width: 42px;
+    height: 42px;
+  }
+
+  .form-field input {
+    height: 46px;
+    font-size: 16px;
+  }
+
+  .form-field textarea {
+    min-height: 82px;
+    font-size: 16px;
+  }
+
+  .day-picker {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 5px;
+  }
+
+  .day-option span {
+    width: 100%;
+    height: 40px;
+    font-size: 9px;
+  }
+
+  .modal-actions {
+    position: sticky;
+    bottom: -18px;
+    padding: 12px 0 max(4px, env(safe-area-inset-bottom));
+    margin-top: 17px;
+    background: #fffefa;
+  }
+
+  .modal-actions .button {
+    min-height: 46px;
+    flex: 1 1 0;
+    padding: 0 10px;
+  }
+
+  .toast-region {
+    right: max(12px, env(safe-area-inset-right));
+    bottom: max(12px, env(safe-area-inset-bottom));
+    left: max(12px, env(safe-area-inset-left));
+    width: auto;
+  }
+}
+
+@media (max-width: 360px) {
+  .nav-item {
+    padding: 0 5px;
+  }
+
+  .nav-item-label {
+    font-size: 8px;
+  }
+
+  .nav-count {
+    min-width: 14px;
+    height: 14px;
+    font-size: 7px;
+  }
+
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-stat {
+    gap: 7px;
+  }
+
+  .admin-stat-icon {
+    width: 25px;
+    height: 25px;
+  }
+
+  .backfill-form {
+    grid-template-columns: 1fr;
+  }
+
+  .backfill-form .button {
+    grid-column: auto;
+  }
+}
+
+@media (max-width: 480px) {
+  .login-screen {
+    padding: 16px;
+  }
+
+  .login-card {
+    padding: 28px 24px;
   }
 }
 
@@ -2818,5 +3436,308 @@ button:disabled {
 
   .backfill-form .button {
     grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 620px) {
+  .eyebrow {
+    font-size: 10px;
+    letter-spacing: 0.12em;
+  }
+
+  .nav-item-label {
+    font-size: 11px;
+  }
+
+  .nav-count {
+    font-size: 9px;
+  }
+
+  .button,
+  .topbar-actions .button {
+    font-size: 12px;
+  }
+
+  .welcome-copy p:not(.eyebrow) {
+    font-size: 14px;
+    line-height: 1.55;
+  }
+
+  .welcome-secondary {
+    font-size: 12px;
+  }
+
+  .summary-card-label {
+    font-size: 10px;
+    letter-spacing: 0.06em;
+  }
+
+  .summary-card-value {
+    font-size: 23px;
+  }
+
+  .summary-card-highlight .summary-card-value {
+    font-size: 18px;
+  }
+
+  .summary-card-meta {
+    font-size: 11px;
+  }
+
+  .section-heading h2 {
+    font-size: 24px;
+  }
+
+  .section-heading-meta {
+    font-size: 12px;
+  }
+
+  .lane-title {
+    font-size: 12px;
+  }
+
+  .lane-description {
+    font-size: 11px;
+  }
+
+  .lane-count {
+    font-size: 11px;
+  }
+
+  .task-card-kicker {
+    font-size: 9px;
+  }
+
+  .task-card h3 {
+    font-size: 16px;
+  }
+
+  .task-card-description {
+    font-size: 13px;
+  }
+
+  .task-card-meta,
+  .task-card-status {
+    font-size: 12px;
+  }
+
+  .completion-slider-label {
+    font-size: 13px;
+  }
+
+  .previous-day-copy strong {
+    font-size: 14px;
+  }
+
+  .previous-day-copy span,
+  .previous-day-copy small {
+    font-size: 11px;
+  }
+
+  .previous-day-item .complete-button {
+    font-size: 12px;
+  }
+
+  .admin-heading h1 {
+    font-size: 30px;
+  }
+
+  .admin-heading-copy {
+    font-size: 14px;
+  }
+
+  .admin-stat-label {
+    font-size: 10px;
+  }
+
+  .admin-stat-value {
+    font-size: 21px;
+  }
+
+  .admin-list-heading h2 {
+    font-size: 16px;
+  }
+
+  .admin-list-heading span {
+    font-size: 12px;
+  }
+
+  .admin-task-name {
+    font-size: 14px;
+  }
+
+  .admin-status {
+    font-size: 9px;
+  }
+
+  .admin-task-description,
+  .admin-task-meta {
+    font-size: 12px;
+  }
+
+  .toggle-control {
+    font-size: 11px;
+  }
+
+  .report-heading h1 {
+    font-size: 30px;
+  }
+
+  .report-heading .admin-heading-copy {
+    font-size: 14px;
+  }
+
+  .week-picker-label {
+    font-size: 10px;
+  }
+
+  .week-picker-label input {
+    font-size: 16px;
+  }
+
+  .report-period-kicker {
+    font-size: 11px;
+  }
+
+  .report-period-banner strong {
+    font-size: 14px;
+  }
+
+  .report-period-note {
+    font-size: 12px;
+  }
+
+  .report-stat div > span {
+    font-size: 10px;
+  }
+
+  .report-stat strong {
+    font-size: 24px;
+  }
+
+  .report-stat small {
+    font-size: 10px;
+  }
+
+  .report-section-heading h2 {
+    font-size: 23px;
+  }
+
+  .report-section-heading > span {
+    font-size: 12px;
+  }
+
+  .report-day-heading span {
+    font-size: 11px;
+  }
+
+  .report-day-heading strong {
+    font-size: 13px;
+  }
+
+  .report-day-heading em {
+    font-size: 10px;
+  }
+
+  .report-occurrence-name {
+    font-size: 12px;
+  }
+
+  .report-occurrence-button {
+    font-size: 12px;
+  }
+
+  .report-day-empty {
+    font-size: 11px;
+  }
+
+  .report-task-name-row strong {
+    font-size: 14px;
+  }
+
+  .report-task-main p {
+    font-size: 11px;
+  }
+
+  .report-task-progress span {
+    font-size: 14px;
+  }
+
+  .report-task-progress small,
+  .report-dates-label {
+    font-size: 10px;
+  }
+
+  .report-task-dates > div span {
+    font-size: 10px;
+  }
+
+  .backfill-copy h2 {
+    font-size: 18px;
+  }
+
+  .backfill-copy p:not(.eyebrow) {
+    font-size: 12px;
+  }
+
+  .backfill-form label {
+    font-size: 11px;
+  }
+
+  .backfill-form input,
+  .backfill-form select {
+    font-size: 16px;
+  }
+
+  .backfill-form .button {
+    font-size: 12px;
+  }
+
+  .modal-heading h2 {
+    font-size: 27px;
+  }
+
+  .form-field label,
+  .day-fieldset legend {
+    font-size: 12px;
+  }
+
+  .optional-label {
+    font-size: 10px;
+  }
+
+  .fieldset-help {
+    font-size: 12px;
+  }
+
+  .switch-text {
+    font-size: 12px;
+  }
+
+  .day-option span {
+    font-size: 11px;
+  }
+
+  .modal-actions .button {
+    font-size: 13px;
+  }
+
+  .toast,
+  .toast strong {
+    font-size: 13px;
+  }
+}
+
+@media (max-width: 360px) {
+  .nav-item-label {
+    font-size: 9px;
+  }
+
+  .nav-count {
+    font-size: 8px;
+  }
+
+  .summary-card-label {
+    font-size: 9px;
   }
 }
