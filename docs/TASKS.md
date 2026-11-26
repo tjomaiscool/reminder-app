@@ -78,7 +78,7 @@ These are planned tasks, not completed work. Owners, estimates, and delivery dat
 - [ ] Validate one-handed completion/undo, readable status, simple task creation/editing, and report navigation.
 - [ ] Test accessibility basics: focus, labels, contrast, reduced motion where relevant, and error states.
 - **Acceptance:** no horizontal scroll or zoom required for the core workflow on the target devices.
-- **Implementation started:** Today task cards use a mobile-only swipe slider for completing and undoing a task; desktop retains its Complete button. Phone-sized card text and touch targets are larger. Device validation remains open.
+- **Implementation started:** Today task cards use a mobile-only swipe slider for completing and undoing a task; desktop retains its Complete button. Small-screen spacing, sticky navigation, touch targets, report controls, and task dialogs are tuned for narrow widths and safe areas. Device validation remains open.
 
 ## Phase 3 — Installable PWA (after mobile usability)
 

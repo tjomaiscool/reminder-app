@@ -2260,6 +2260,393 @@ button:disabled {
 }
 
 @media (max-width: 480px) {
+  .sidebar {
+    position: sticky;
+    z-index: 10;
+    top: 0;
+    gap: 8px;
+    padding: max(9px, env(safe-area-inset-top)) 12px 9px;
+    padding-right: max(12px, env(safe-area-inset-right));
+    padding-left: max(12px, env(safe-area-inset-left));
+    background: var(--forest);
+  }
+
+  .brand-lockup {
+    gap: 7px;
+  }
+
+  .brand-mark {
+    width: 25px;
+    height: 25px;
+  }
+
+  .brand-name {
+    font-size: 16px;
+  }
+
+  .brand-subtitle {
+    font-size: 7px;
+  }
+
+  .primary-nav {
+    gap: 2px;
+  }
+
+  .nav-item {
+    min-height: 42px;
+    gap: 4px;
+    padding: 0 6px;
+    border-radius: 9px;
+  }
+
+  .nav-item-label {
+    font-size: 9px;
+  }
+
+  .nav-count {
+    min-width: 16px;
+    height: 16px;
+    margin-left: 0;
+    padding: 0 3px;
+    border-radius: 6px;
+    font-size: 8px;
+  }
+
+  .topbar {
+    min-height: 62px;
+    gap: 8px;
+    padding: 8px 12px;
+    padding-right: max(12px, env(safe-area-inset-right));
+    padding-left: max(12px, env(safe-area-inset-left));
+  }
+
+  .topbar-actions {
+    gap: 6px;
+  }
+
+  .topbar-actions .button {
+    min-height: 42px;
+    padding: 0 10px;
+    font-size: 10px;
+  }
+
+  .content-wrap {
+    width: calc(100% - max(24px, env(safe-area-inset-left) + env(safe-area-inset-right)));
+    padding: 14px 0 calc(40px + env(safe-area-inset-bottom));
+  }
+
+  .welcome-panel {
+    min-height: 0;
+    padding: 23px 20px;
+    border-radius: 16px;
+  }
+
+  .welcome-copy h1 {
+    max-width: 100%;
+    font-size: clamp(30px, 9vw, 36px);
+    line-height: 1.06;
+  }
+
+  .welcome-copy p:not(.eyebrow) {
+    font-size: 12px;
+  }
+
+  .welcome-actions {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 11px;
+    margin-top: 18px;
+  }
+
+  .welcome-actions .button-primary {
+    min-height: 44px;
+  }
+
+  .week-orbit {
+    display: none;
+  }
+
+  .summary-grid,
+  .admin-overview,
+  .report-summary {
+    gap: 8px;
+  }
+
+  .summary-card {
+    min-height: 105px;
+    padding: 12px;
+    border-radius: 12px;
+  }
+
+  .summary-card-label {
+    font-size: 8px;
+    letter-spacing: 0.07em;
+  }
+
+  .summary-card-icon {
+    width: 24px;
+    height: 24px;
+  }
+
+  .summary-card-value {
+    margin-top: 13px;
+    font-size: 21px;
+  }
+
+  .summary-card-highlight .summary-card-value {
+    font-size: 16px;
+  }
+
+  .summary-card-meta {
+    font-size: 9px;
+  }
+
+  .section-heading h2,
+  .admin-heading h1 {
+    font-size: 23px;
+  }
+
+  .lane {
+    padding: 14px 12px 12px;
+    border-radius: 13px;
+  }
+
+  .task-card {
+    padding: 15px 13px 14px;
+  }
+
+  .task-card h3 {
+    font-size: 15px;
+  }
+
+  .completion-slider {
+    min-height: 50px;
+  }
+
+  .completion-slider-label {
+    padding: 0 44px;
+    font-size: 11px;
+  }
+
+  .previous-day-item {
+    gap: 9px;
+    padding: 11px;
+  }
+
+  .previous-day-item .complete-button {
+    min-height: 40px;
+    font-size: 10px;
+  }
+
+  .report-heading h1 {
+    font-size: 29px;
+  }
+
+  .report-week-controls {
+    width: 100%;
+  }
+
+  .week-nav-button {
+    width: 42px;
+    height: 42px;
+    flex: 0 0 auto;
+  }
+
+  .week-picker-label {
+    min-height: 44px;
+    padding: 0 9px;
+  }
+
+  .week-picker-label input {
+    font-size: 16px;
+  }
+
+  .report-stat {
+    gap: 9px;
+    padding: 11px;
+  }
+
+  .report-stat div > span {
+    font-size: 8px;
+    letter-spacing: 0.06em;
+  }
+
+  .report-stat small {
+    font-size: 8px;
+  }
+
+  .report-occurrence-button {
+    min-height: 36px;
+    padding: 0 5px;
+    font-size: 10px;
+  }
+
+  .report-task-row {
+    gap: 12px;
+    padding: 13px;
+  }
+
+  .backfill-panel {
+    gap: 16px;
+    padding: 14px;
+  }
+
+  .backfill-form input,
+  .backfill-form select,
+  .backfill-form .button {
+    min-height: 44px;
+  }
+
+  .backfill-form input,
+  .backfill-form select {
+    font-size: 16px;
+  }
+
+  .admin-stat {
+    min-width: 0;
+    padding: 11px 9px;
+  }
+
+  .admin-stat-label {
+    font-size: 8px;
+    letter-spacing: 0.04em;
+  }
+
+  .admin-task-row {
+    gap: 8px;
+    padding: 12px 10px;
+  }
+
+  .admin-task-name {
+    font-size: 12px;
+  }
+
+  .admin-task-meta {
+    font-size: 9px;
+    white-space: normal;
+  }
+
+  .admin-task-actions {
+    gap: 1px;
+  }
+
+  .row-action {
+    width: 38px;
+    height: 40px;
+  }
+
+  .toggle-control {
+    min-height: 40px;
+    padding: 0 3px;
+  }
+
+  .modal-backdrop {
+    align-items: end;
+    padding: max(8px, env(safe-area-inset-top)) 8px max(8px, env(safe-area-inset-bottom));
+    padding-right: max(8px, env(safe-area-inset-right));
+    padding-left: max(8px, env(safe-area-inset-left));
+  }
+
+  .modal {
+    width: 100%;
+    max-height: calc(100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 16px);
+    max-height: calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 16px);
+    padding: 22px 18px max(18px, env(safe-area-inset-bottom));
+    border-radius: 18px 18px 12px 12px;
+    overscroll-behavior: contain;
+  }
+
+  .modal-heading {
+    margin-bottom: 19px;
+  }
+
+  .modal-close {
+    width: 42px;
+    height: 42px;
+  }
+
+  .form-field input {
+    height: 46px;
+    font-size: 16px;
+  }
+
+  .form-field textarea {
+    min-height: 82px;
+    font-size: 16px;
+  }
+
+  .day-picker {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 5px;
+  }
+
+  .day-option span {
+    width: 100%;
+    height: 40px;
+    font-size: 9px;
+  }
+
+  .modal-actions {
+    position: sticky;
+    bottom: -18px;
+    padding: 12px 0 max(4px, env(safe-area-inset-bottom));
+    margin-top: 17px;
+    background: #fffefa;
+  }
+
+  .modal-actions .button {
+    min-height: 46px;
+    flex: 1 1 0;
+    padding: 0 10px;
+  }
+
+  .toast-region {
+    right: max(12px, env(safe-area-inset-right));
+    bottom: max(12px, env(safe-area-inset-bottom));
+    left: max(12px, env(safe-area-inset-left));
+    width: auto;
+  }
+}
+
+@media (max-width: 360px) {
+  .nav-item {
+    padding: 0 5px;
+  }
+
+  .nav-item-label {
+    font-size: 8px;
+  }
+
+  .nav-count {
+    min-width: 14px;
+    height: 14px;
+    font-size: 7px;
+  }
+
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-stat {
+    gap: 7px;
+  }
+
+  .admin-stat-icon {
+    width: 25px;
+    height: 25px;
+  }
+
+  .backfill-form {
+    grid-template-columns: 1fr;
+  }
+
+  .backfill-form .button {
+    grid-column: auto;
+  }
+}
+
+@media (max-width: 480px) {
   .login-screen {
     padding: 16px;
   }
