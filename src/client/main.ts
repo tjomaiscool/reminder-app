@@ -52,6 +52,7 @@ const breadcrumbPage = document.querySelector<HTMLSpanElement>("#breadcrumbPage"
 const topbarDate = document.querySelector<HTMLSpanElement>("#topbarDate")!;
 const navTodayCount = document.querySelector<HTMLSpanElement>("#navTodayCount")!;
 const navTaskCount = document.querySelector<HTMLSpanElement>("#navTaskCount")!;
+const sliderGestures = new Map<number, { button: HTMLButtonElement; startX: number; maxTravel: number }>();
 
 if (!appShell || !loginScreen || !loginForm || !loginPassword || !loginButton || !loginError || !logoutButton || !pageContent || !modalBackdrop || !taskForm || !taskNameInput || !taskDescriptionInput || !weeklyFrequencyInput || !taskEnabledInput || !taskEnabledLabel || !formError || !modalTitle || !modalEyebrow || !saveTaskButton || !toastRegion || !breadcrumbPage || !topbarDate || !navTodayCount || !navTaskCount) {
   throw new Error("Cadence could not find its application shell.");
@@ -73,8 +74,52 @@ function bindEvents(): void {
 
     const actionButton = target.closest<HTMLElement>("[data-action]");
     if (!actionButton) return;
+    if (actionButton.matches("[data-mobile-slider]") && event instanceof MouseEvent && event.detail !== 0) return;
     void handleAction(actionButton.dataset.action ?? "", actionButton.dataset.id, actionButton.dataset.date, actionButton.dataset.completed);
   });
+
+  document.addEventListener("pointerdown", (event) => {
+    if (!(event.target instanceof Element) || !event.isPrimary || event.button !== 0) return;
+    const button = event.target.closest<HTMLButtonElement>("button[data-mobile-slider]:not(:disabled)");
+    if (!button) return;
+    const thumb = button.querySelector<HTMLElement>(".completion-slider-thumb");
+    if (!thumb) return;
+    event.preventDefault();
+    const maxTravel = Math.max(button.clientWidth - thumb.offsetWidth - 8, 0);
+    sliderGestures.set(event.pointerId, { button, startX: event.clientX, maxTravel });
+    button.setPointerCapture(event.pointerId);
+    button.classList.add("is-dragging");
+  });
+
+  document.addEventListener("pointermove", (event) => {
+    const gesture = sliderGestures.get(event.pointerId);
+    if (!gesture) return;
+    const complete = gesture.button.dataset.completed === "true";
+    const delta = event.clientX - gesture.startX;
+    const offset = complete
+      ? Math.max(0, Math.min(gesture.maxTravel, gesture.maxTravel + delta))
+      : Math.max(0, Math.min(gesture.maxTravel, delta));
+    const progress = gesture.maxTravel === 0 ? 0 : offset / gesture.maxTravel;
+    gesture.button.style.setProperty("--slider-progress", `${progress * 100}%`);
+    gesture.button.style.setProperty("--slider-offset", `${complete ? -offset : offset}px`);
+  });
+
+  const finishSliderGesture = (event: PointerEvent, shouldComplete: boolean): void => {
+    const gesture = sliderGestures.get(event.pointerId);
+    if (!gesture) return;
+    sliderGestures.delete(event.pointerId);
+    gesture.button.classList.remove("is-dragging");
+    const progress = Number.parseFloat(gesture.button.style.getPropertyValue("--slider-progress")) || 0;
+    const wasCompleted = gesture.button.dataset.completed === "true";
+    gesture.button.style.removeProperty("--slider-progress");
+    gesture.button.style.removeProperty("--slider-offset");
+    if (shouldComplete && (wasCompleted ? progress <= 18 : progress >= 82)) {
+      void handleAction("toggle-completion", gesture.button.dataset.id);
+    }
+  };
+
+  document.addEventListener("pointerup", (event) => finishSliderGesture(event, true));
+  document.addEventListener("pointercancel", (event) => finishSliderGesture(event, false));
 
   taskForm.addEventListener("submit", (event) => {
     event.preventDefault();
@@ -436,6 +481,11 @@ function renderTaskCard(task: TaskView, kind: "must" | "optional" | "other"): st
         <span class="task-card-status ${statusClass}">${escapeHtml(task.statusLabel)} · ${task.completedCount}/${task.weeklyFrequency}</span>
         <button class="complete-button ${task.completedToday ? "is-complete" : ""} ${buttonDisabled ? "is-disabled" : ""}" type="button" data-action="toggle-completion" data-id="${escapeAttribute(task.id)}" ${buttonDisabled ? "disabled" : ""}>
           ${task.completedToday ? iconCheck() : iconPlus()}<span>${buttonLabel}</span>
+        </button>
+        <button class="completion-slider ${task.completedToday ? "is-completed" : ""}" type="button" data-mobile-slider data-action="toggle-completion" data-id="${escapeAttribute(task.id)}" data-completed="${String(task.completedToday)}" aria-label="${task.completedToday ? "Slide left to undo completion" : buttonDisabled ? "Weekly goal met" : "Slide right to complete task"}" ${buttonDisabled ? "disabled" : ""}>
+          <span class="completion-slider-track" aria-hidden="true"></span>
+          <span class="completion-slider-label">${task.completedToday ? "Slide to undo" : buttonDisabled ? "Goal met" : "Slide to complete"}</span>
+          <span class="completion-slider-thumb" aria-hidden="true">${task.completedToday ? iconCheck() : iconPlus()}</span>
         </button>
       </div>
     </article>`;
